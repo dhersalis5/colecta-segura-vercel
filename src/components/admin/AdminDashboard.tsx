@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ProjectEditor } from './ProjectEditor';
 import DonationStats from './DonationStats';
+import InitializeDatabase from './InitializeDatabase';
 import { Project } from '@/types/project';
-import * as projectService from '@/services/projectService';
-import { LogOut, Loader2 } from 'lucide-react';
+import * as projectService from '@/services/cloudProjectService';
+import { LogOut, Loader2, CloudCog, Database } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -23,6 +24,7 @@ const AdminDashboard: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("proyectos");
+  const [usingCloud, setUsingCloud] = useState<boolean>(true);
   
   // Configuración de métodos de pago disponibles
   const [paymentMethods, setPaymentMethods] = useState({
@@ -169,6 +171,12 @@ const AdminDashboard: React.FC = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Panel de Administración</h1>
         <div className="flex items-center gap-2">
+          <div className="flex items-center mr-4 text-sm">
+            <CloudCog className="h-4 w-4 mr-1 text-primary" />
+            <span className="text-muted-foreground">
+              {usingCloud ? "Base de datos en la nube" : "Almacenamiento local"}
+            </span>
+          </div>
           <p className="text-muted-foreground mr-2">
             Hola, {currentUser?.email}
           </p>
@@ -262,71 +270,92 @@ const AdminDashboard: React.FC = () => {
         <TabsContent value="configuracion">
           <h2 className="text-2xl font-semibold mb-6">Configuración de la plataforma</h2>
           
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Métodos de pago</CardTitle>
-              <CardDescription>
-                Habilita o deshabilita los métodos de pago disponibles para donaciones
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="mercadopago"
-                  checked={paymentMethods.mercadopago}
-                  onChange={(e) => setPaymentMethods({...paymentMethods, mercadopago: e.target.checked})}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="mercadopago">MercadoPago</Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="banktransfer"
-                  checked={paymentMethods.banktransfer}
-                  onChange={(e) => setPaymentMethods({...paymentMethods, banktransfer: e.target.checked})}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="banktransfer">Transferencia bancaria</Label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="cash"
-                  checked={paymentMethods.cash}
-                  onChange={(e) => setPaymentMethods({...paymentMethods, cash: e.target.checked})}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="cash">Efectivo</Label>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card className="mb-6 lg:mb-0">
+              <CardHeader>
+                <CardTitle>Métodos de pago</CardTitle>
+                <CardDescription>
+                  Habilita o deshabilita los métodos de pago disponibles para donaciones
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="mercadopago"
+                    checked={paymentMethods.mercadopago}
+                    onChange={(e) => setPaymentMethods({...paymentMethods, mercadopago: e.target.checked})}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="mercadopago">MercadoPago</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="banktransfer"
+                    checked={paymentMethods.banktransfer}
+                    onChange={(e) => setPaymentMethods({...paymentMethods, banktransfer: e.target.checked})}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="banktransfer">Transferencia bancaria</Label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="cash"
+                    checked={paymentMethods.cash}
+                    onChange={(e) => setPaymentMethods({...paymentMethods, cash: e.target.checked})}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="cash">Efectivo</Label>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="mb-6 lg:mb-0">
+              <CardHeader>
+                <CardTitle>Configuración de donaciones</CardTitle>
+                <CardDescription>
+                  Personaliza las opciones disponibles para donantes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="anonymous"
+                    checked={allowAnonymousDonations}
+                    onChange={(e) => setAllowAnonymousDonations(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="anonymous">Permitir donaciones anónimas</Label>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
           
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>Configuración de donaciones</CardTitle>
-              <CardDescription>
-                Personaliza las opciones disponibles para donantes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="anonymous"
-                  checked={allowAnonymousDonations}
-                  onChange={(e) => setAllowAnonymousDonations(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label htmlFor="anonymous">Permitir donaciones anónimas</Label>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Button onClick={saveSettings} className="w-full">Guardar configuración</Button>
+            
+            <div className="flex items-center gap-2">
+              <CloudCog className="h-5 w-5 text-primary" />
+              <div className="text-sm">
+                <span className="font-medium">Base de datos en uso:</span>
+                <span className="ml-2">{usingCloud ? "Supabase (en la nube)" : "LocalStorage (solo este navegador)"}</span>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
           
-          <Button onClick={saveSettings}>Guardar configuración</Button>
+          <div className="mt-8">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Database className="h-5 w-5" />
+              Administración de la base de datos
+            </h3>
+            
+            <InitializeDatabase />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
