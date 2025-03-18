@@ -10,7 +10,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import HowItWorks from "./pages/HowItWorks";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
-import Admin from "./pages/Admin";
+import AdminRoutes from "./routes/admin";
 import NotFound from "./pages/NotFound";
 import DonationSuccess from "./pages/DonationSuccess";
 import DonationPending from "./pages/DonationPending";
@@ -37,7 +37,7 @@ const App = () => {
             <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/about" element={<About />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/*" element={<AdminRoutes />} />
             <Route path="/donation-success" element={<DonationSuccess />} />
             <Route path="/donation-pending" element={<DonationPending />} />
             <Route path="/donation-failure" element={<DonationFailure />} />
