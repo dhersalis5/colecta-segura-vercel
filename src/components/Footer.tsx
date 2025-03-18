@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react';
@@ -99,19 +98,19 @@ const Footer: React.FC = () => {
               <li className="flex">
                 <MapPin className="h-5 w-5 mr-3 text-primary flex-shrink-0" />
                 <span className="text-foreground/70 text-sm">
-                  Av. Revolución 123, Col. Centro, Ciudad de México, México
+                  Av. Corrientes 1234, C1043 CABA, Buenos Aires, Argentina
                 </span>
               </li>
               <li className="flex">
                 <Mail className="h-5 w-5 mr-3 text-primary flex-shrink-0" />
-                <a href="mailto:info@colectasegura.com" className="text-foreground/70 hover:text-primary transition-colors duration-300 text-sm">
-                  info@colectasegura.com
+                <a href="mailto:info@colectasegura.com.ar" className="text-foreground/70 hover:text-primary transition-colors duration-300 text-sm">
+                  info@colectasegura.com.ar
                 </a>
               </li>
               <li className="flex">
                 <Phone className="h-5 w-5 mr-3 text-primary flex-shrink-0" />
-                <a href="tel:+5255123456789" className="text-foreground/70 hover:text-primary transition-colors duration-300 text-sm">
-                  +52 55 1234 5678
+                <a href="tel:+541148123456" className="text-foreground/70 hover:text-primary transition-colors duration-300 text-sm">
+                  +54 11 4812 3456
                 </a>
               </li>
             </ul>
