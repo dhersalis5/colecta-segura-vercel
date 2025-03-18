@@ -7,7 +7,11 @@ import AuthGuard from '@/components/admin/AuthGuard';
 const AdminRoutes: React.FC = () => {
   return (
     <Routes>
-      <Route path="/" element={<AuthGuard><AdminDashboard /></AuthGuard>} />
+      <Route path="/" element={
+        <AuthGuard>
+          <AdminDashboard />
+        </AuthGuard>
+      } />
       <Route path="/login" element={<AdminLogin />} />
       <Route path="*" element={<Navigate to="/admin/login" replace />} />
     </Routes>

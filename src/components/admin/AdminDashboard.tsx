@@ -10,6 +10,7 @@ import { ProjectEditor } from './ProjectEditor';
 import DonationStats from './DonationStats';
 import { Project } from '@/types/project';
 import * as projectService from '@/services/projectService';
+import { LogOut } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -107,7 +108,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
-    navigate('/admin/login');
+    window.location.href = '/admin/login';
   };
 
   const saveSettings = () => {
@@ -120,7 +121,10 @@ const AdminDashboard: React.FC = () => {
     <div className="container mx-auto p-4 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Panel de Administración</h1>
-        <Button variant="outline" onClick={handleLogout}>Cerrar sesión</Button>
+        <Button variant="ghost" onClick={handleLogout} className="text-destructive">
+          <LogOut className="h-4 w-4 mr-2" />
+          Cerrar sesión
+        </Button>
       </div>
 
       {error && (
