@@ -25,6 +25,7 @@ interface MercadoPagoButtonProps {
 }
 
 // Para desarrollo local, usa true. Para producción en Vercel, cambia a false
+// Esto cambiará automáticamente a false cuando se compile para producción
 const TEST_MODE = import.meta.env.MODE === 'production' ? false : true;
 
 const formSchema = z.object({

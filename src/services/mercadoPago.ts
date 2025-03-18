@@ -4,6 +4,9 @@
  * 
  * Esta implementación se comunica con APIs serverless en Vercel
  * que protegen las credenciales de MercadoPago.
+ * 
+ * En modo desarrollo (TEST_MODE=true), se usa la implementación directa.
+ * En producción (Vercel), se usan las APIs serverless automáticamente.
  */
 
 export interface PaymentRequest {

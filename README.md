@@ -121,7 +121,7 @@ Para desplegar la aplicación en producción con credenciales reales de MercadoP
 
 ### 2. Preparar el proyecto para producción
 
-1. Asegúrate de que tu repositorio esté actualizado:
+1. Asegúrate de que tu repositorio esté actualizado y subido a GitHub:
    ```bash
    git add .
    git commit -m "Preparación para producción"

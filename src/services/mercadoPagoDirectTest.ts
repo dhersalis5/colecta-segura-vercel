@@ -6,9 +6,9 @@
  * Para producción, se debe implementar una solución backend que proteja el access token.
  * 
  * Opciones para producción:
- * 1. Serverless functions (Netlify, Vercel)
+ * 1. Serverless functions de Vercel (implementación actual)
  * 2. Backend Node.js (Express)
- * 3. Edge Functions de Supabase (con JWT desactivado)
+ * 3. Otras funciones serverless (Netlify, AWS Lambda, etc.)
  */
 
 export interface PaymentRequestDirect {
