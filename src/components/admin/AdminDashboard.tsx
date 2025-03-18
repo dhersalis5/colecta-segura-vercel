@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
@@ -10,9 +9,16 @@ import { ProjectEditor } from './ProjectEditor';
 import DonationStats from './DonationStats';
 import { Project } from '@/types/project';
 import * as projectService from '@/services/projectService';
-import { LogOut } from 'lucide-react';
+import { LogOut, Loader2 } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
+  // Estado de autenticación
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Estados del dashboard
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -21,21 +27,47 @@ const AdminDashboard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("proyectos");
   
-  const navigate = useNavigate();
-
   // Configuración de métodos de pago disponibles
   const [paymentMethods, setPaymentMethods] = useState({
     mercadopago: true,
-    banktransfer: true,
+    banktransfer: true, 
     cash: true
   });
 
   // Configuración para donaciones anónimas
   const [allowAnonymousDonations, setAllowAnonymousDonations] = useState(true);
 
+  // Verificar si el usuario está autenticado
   useEffect(() => {
-    loadProjects();
+    const checkAuth = () => {
+      const token = localStorage.getItem('adminToken');
+      setIsAuthenticated(!!token);
+    };
+    
+    checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadProjects();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    // Autenticación básica para demo
+    if (password === 'admin123') {
+      localStorage.setItem('adminToken', 'demo-token-123456');
+      setIsAuthenticated(true);
+    } else {
+      setLoginError('Contraseña incorrecta');
+    }
+
+    setIsLoggingIn(false);
+  };
 
   const loadProjects = async () => {
     try {
@@ -108,7 +140,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
-    window.location.href = '/admin/login';
+    setIsAuthenticated(false);
   };
 
   const saveSettings = () => {
@@ -117,6 +149,74 @@ const AdminDashboard: React.FC = () => {
     alert('Configuración guardada correctamente');
   };
 
+  // Si no está autenticado, mostrar pantalla de login
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-muted/20">
+        <Card className="w-[380px]">
+          <CardHeader>
+            <CardTitle className="text-xl">Panel de Administración</CardTitle>
+            <CardDescription>
+              Accede al panel para gestionar proyectos y donaciones
+            </CardDescription>
+          </CardHeader>
+
+          <form onSubmit={handleLogin}>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="username" className="block text-sm font-medium mb-1">
+                    Usuario
+                  </Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    defaultValue="admin"
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="password" className="block text-sm font-medium mb-1">
+                    Contraseña
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Ingresa tu contraseña"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-foreground/60 mt-1">
+                    Para demo, usa: admin123
+                  </p>
+                </div>
+                
+                {loginError && (
+                  <div className="text-sm text-red-500 mt-2">
+                    {loginError}
+                  </div>
+                )}
+                
+                <Button type="submit" className="w-full" disabled={isLoggingIn}>
+                  {isLoggingIn ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Iniciando sesión...
+                    </>
+                  ) : (
+                    'Ingresar'
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </form>
+        </Card>
+      </div>
+    );
+  }
+
+  // Panel de administración (cuando está autenticado)
   return (
     <div className="container mx-auto p-4 max-w-7xl">
       <div className="flex justify-between items-center mb-8">
