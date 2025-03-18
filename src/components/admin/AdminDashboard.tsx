@@ -10,14 +10,11 @@ import DonationStats from './DonationStats';
 import { Project } from '@/types/project';
 import * as projectService from '@/services/projectService';
 import { LogOut, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/components/ui/use-toast';
 
 const AdminDashboard: React.FC = () => {
-  // Estado de autenticación
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [password, setPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-
   // Estados del dashboard
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -37,37 +34,26 @@ const AdminDashboard: React.FC = () => {
   // Configuración para donaciones anónimas
   const [allowAnonymousDonations, setAllowAnonymousDonations] = useState(true);
 
-  // Verificar si el usuario está autenticado
+  // Usando el hook de autenticación
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
   useEffect(() => {
-    const checkAuth = () => {
-      const token = localStorage.getItem('adminToken');
-      setIsAuthenticated(!!token);
-    };
+    loadProjects();
     
-    checkAuth();
+    // Cargar configuración guardada
+    const savedPaymentMethods = localStorage.getItem('paymentMethods');
+    const savedAllowAnonymous = localStorage.getItem('allowAnonymousDonations');
+    
+    if (savedPaymentMethods) {
+      setPaymentMethods(JSON.parse(savedPaymentMethods));
+    }
+    
+    if (savedAllowAnonymous) {
+      setAllowAnonymousDonations(JSON.parse(savedAllowAnonymous));
+    }
   }, []);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadProjects();
-    }
-  }, [isAuthenticated]);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoggingIn(true);
-    setLoginError('');
-
-    // Autenticación básica para demo
-    if (password === 'admin123') {
-      localStorage.setItem('adminToken', 'demo-token-123456');
-      setIsAuthenticated(true);
-    } else {
-      setLoginError('Contraseña incorrecta');
-    }
-
-    setIsLoggingIn(false);
-  };
 
   const loadProjects = async () => {
     try {
@@ -138,93 +124,68 @@ const AdminDashboard: React.FC = () => {
     setSelectedProject(null);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminToken');
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Sesión cerrada",
+        description: "Has cerrado sesión correctamente",
+      });
+      navigate('/admin/login');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      toast({
+        title: "Error",
+        description: "Hubo un problema al cerrar sesión",
+        variant: "destructive"
+      });
+    }
   };
 
   const saveSettings = () => {
     localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
     localStorage.setItem('allowAnonymousDonations', JSON.stringify(allowAnonymousDonations));
-    alert('Configuración guardada correctamente');
+    toast({
+      title: "Configuración guardada",
+      description: "La configuración se ha guardado correctamente"
+    });
   };
 
-  // Si no está autenticado, mostrar pantalla de login
-  if (!isAuthenticated) {
+  // Si se está editando o creando un proyecto, muestra el editor de proyectos
+  if (isEditing || isCreating) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-muted/20">
-        <Card className="w-[380px]">
-          <CardHeader>
-            <CardTitle className="text-xl">Panel de Administración</CardTitle>
-            <CardDescription>
-              Accede al panel para gestionar proyectos y donaciones
-            </CardDescription>
-          </CardHeader>
-
-          <form onSubmit={handleLogin}>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="username" className="block text-sm font-medium mb-1">
-                    Usuario
-                  </Label>
-                  <Input
-                    id="username"
-                    type="text"
-                    defaultValue="admin"
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="password" className="block text-sm font-medium mb-1">
-                    Contraseña
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Ingresa tu contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <p className="text-xs text-foreground/60 mt-1">
-                    Para demo, usa: admin123
-                  </p>
-                </div>
-                
-                {loginError && (
-                  <div className="text-sm text-red-500 mt-2">
-                    {loginError}
-                  </div>
-                )}
-                
-                <Button type="submit" className="w-full" disabled={isLoggingIn}>
-                  {isLoggingIn ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Iniciando sesión...
-                    </>
-                  ) : (
-                    'Ingresar'
-                  )}
-                </Button>
-              </div>
-            </CardContent>
-          </form>
-        </Card>
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex justify-between mb-6">
+          <h1 className="text-3xl font-bold mb-6">
+            {isCreating ? 'Crear nuevo proyecto' : 'Editar proyecto'}
+          </h1>
+          <Button variant="outline" onClick={handleCancel}>
+            Cancelar
+          </Button>
+        </div>
+        <ProjectEditor 
+          project={isEditing ? selectedProject : null}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
       </div>
     );
   }
 
-  // Panel de administración (cuando está autenticado)
+  // Pantalla principal del dashboard
   return (
-    <div className="container mx-auto p-4 max-w-7xl">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto py-8 px-4">
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Panel de Administración</h1>
-        <Button variant="ghost" onClick={handleLogout} className="text-destructive">
-          <LogOut className="h-4 w-4 mr-2" />
-          Cerrar sesión
-        </Button>
+        <div className="flex items-center gap-2">
+          <p className="text-muted-foreground mr-2">
+            Hola, {currentUser?.email}
+          </p>
+          <Button variant="outline" onClick={handleLogout}>
+            <LogOut className="h-4 w-4 mr-2" />
+            Cerrar sesión
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -233,192 +194,148 @@ const AdminDashboard: React.FC = () => {
         </Alert>
       )}
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
+      <Tabs defaultValue="proyectos" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full md:w-auto grid-cols-3">
           <TabsTrigger value="proyectos">Proyectos</TabsTrigger>
-          <TabsTrigger value="estadisticas">Estadísticas</TabsTrigger>
+          <TabsTrigger value="donaciones">Donaciones</TabsTrigger>
           <TabsTrigger value="configuracion">Configuración</TabsTrigger>
         </TabsList>
-
-        {/* TAB: Proyectos */}
-        <TabsContent value="proyectos">
-          {isCreating || isEditing ? (
+        
+        <TabsContent value="proyectos" className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-semibold">Gestión de Proyectos</h2>
+            <Button onClick={handleCreateNew}>Crear nuevo proyecto</Button>
+          </div>
+          
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : projects.length === 0 ? (
             <Card>
-              <CardHeader>
-                <CardTitle>{isCreating ? 'Crear nuevo proyecto' : 'Editar proyecto'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ProjectEditor 
-                  project={selectedProject} 
-                  onSave={handleSave} 
-                  onCancel={handleCancel} 
-                />
+              <CardContent className="pt-6 text-center">
+                <p className="text-muted-foreground">No hay proyectos disponibles. Crea tu primer proyecto.</p>
               </CardContent>
             </Card>
           ) : (
-            <>
-              <div className="flex justify-end mb-4">
-                <Button onClick={handleCreateNew}>Nuevo Proyecto</Button>
-              </div>
-              
-              {isLoading ? (
-                <div className="flex justify-center py-10">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-                </div>
-              ) : projects.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {projects.map((project) => (
-                    <Card key={project.id} className="overflow-hidden">
-                      {project.coverImage && (
-                        <div className="h-48 overflow-hidden">
-                          <img 
-                            src={project.coverImage} 
-                            alt={project.title}
-                            className="w-full h-full object-cover transition-transform hover:scale-105"
-                          />
-                        </div>
-                      )}
-                      <CardHeader>
-                        <CardTitle className="truncate">{project.title}</CardTitle>
-                        <CardDescription>
-                          Meta: ${project.goalAmount.toLocaleString()}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm mb-4 line-clamp-2">{project.shortDescription}</p>
-                        <div className="flex space-x-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => handleEdit(project)}
-                          >
-                            Editar
-                          </Button>
-                          <Button 
-                            variant="destructive" 
-                            size="sm" 
-                            onClick={() => handleDelete(project.id)}
-                          >
-                            Eliminar
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <Card>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {projects.map((project) => (
+                <Card key={project.id} className="overflow-hidden">
+                  {project.coverImage && (
+                    <div className="aspect-video w-full overflow-hidden">
+                      <img 
+                        src={project.coverImage} 
+                        alt={project.title} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <CardHeader>
-                    <CardTitle>No hay proyectos</CardTitle>
-                    <CardDescription>
-                      Crea tu primer proyecto para comenzar a recibir donaciones.
+                    <CardTitle>{project.title}</CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {project.shortDescription}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <Button onClick={handleCreateNew}>Crear proyecto</Button>
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Meta:</span>
+                      <span className="font-medium">${project.goalAmount?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Estado:</span>
+                      <span className="font-medium">{project.isActive ? 'Activo' : 'Inactivo'}</span>
+                    </div>
                   </CardContent>
+                  <div className="px-6 pb-6 flex gap-2">
+                    <Button variant="outline" className="w-full" onClick={() => handleEdit(project)}>
+                      Editar
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      className="w-full"
+                      onClick={() => handleDelete(project.id)}
+                    >
+                      Eliminar
+                    </Button>
+                  </div>
                 </Card>
-              )}
-            </>
+              ))}
+            </div>
           )}
         </TabsContent>
-
-        {/* TAB: Estadísticas */}
-        <TabsContent value="estadisticas">
+        
+        <TabsContent value="donaciones">
           <DonationStats />
         </TabsContent>
-
-        {/* TAB: Configuración */}
+        
         <TabsContent value="configuracion">
-          <Card>
+          <h2 className="text-2xl font-semibold mb-6">Configuración de la plataforma</h2>
+          
+          <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Configuración de la plataforma</CardTitle>
+              <CardTitle>Métodos de pago</CardTitle>
               <CardDescription>
-                Personaliza las opciones de tu plataforma de donaciones
+                Habilita o deshabilita los métodos de pago disponibles para donaciones
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Métodos de pago */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Métodos de pago</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="mercadopago"
-                      checked={paymentMethods.mercadopago}
-                      onChange={(e) => setPaymentMethods({...paymentMethods, mercadopago: e.target.checked})}
-                      className="rounded text-primary"
-                    />
-                    <label htmlFor="mercadopago">MercadoPago</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="banktransfer"
-                      checked={paymentMethods.banktransfer}
-                      onChange={(e) => setPaymentMethods({...paymentMethods, banktransfer: e.target.checked})}
-                      className="rounded text-primary"
-                    />
-                    <label htmlFor="banktransfer">Transferencia Bancaria</label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="cash"
-                      checked={paymentMethods.cash}
-                      onChange={(e) => setPaymentMethods({...paymentMethods, cash: e.target.checked})}
-                      className="rounded text-primary"
-                    />
-                    <label htmlFor="cash">Efectivo</label>
-                  </div>
-                </div>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="mercadopago"
+                  checked={paymentMethods.mercadopago}
+                  onChange={(e) => setPaymentMethods({...paymentMethods, mercadopago: e.target.checked})}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="mercadopago">MercadoPago</Label>
               </div>
-
-              {/* Donaciones anónimas */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Opciones de donación</h3>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="anonymous"
-                    checked={allowAnonymousDonations}
-                    onChange={(e) => setAllowAnonymousDonations(e.target.checked)}
-                    className="rounded text-primary"
-                  />
-                  <label htmlFor="anonymous">Permitir donaciones anónimas</label>
-                </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="banktransfer"
+                  checked={paymentMethods.banktransfer}
+                  onChange={(e) => setPaymentMethods({...paymentMethods, banktransfer: e.target.checked})}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="banktransfer">Transferencia bancaria</Label>
               </div>
-
-              {/* Email para notificaciones */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Notificaciones</h3>
-                <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm">Email para notificaciones</label>
-                  <Input 
-                    type="email" 
-                    id="email" 
-                    placeholder="admin@colectasegura.org.ar" 
-                  />
-                </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="cash"
+                  checked={paymentMethods.cash}
+                  onChange={(e) => setPaymentMethods({...paymentMethods, cash: e.target.checked})}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="cash">Efectivo</Label>
               </div>
-
-              {/* Soporte */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Información de soporte</h3>
-                <div className="space-y-2">
-                  <label htmlFor="support" className="block text-sm">Email de soporte</label>
-                  <Input 
-                    type="email" 
-                    id="support" 
-                    placeholder="soporte@colectasegura.org.ar" 
-                  />
-                </div>
-              </div>
-
-              <Button onClick={saveSettings}>Guardar configuración</Button>
             </CardContent>
           </Card>
+          
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Configuración de donaciones</CardTitle>
+              <CardDescription>
+                Personaliza las opciones disponibles para donantes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="anonymous"
+                  checked={allowAnonymousDonations}
+                  onChange={(e) => setAllowAnonymousDonations(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="anonymous">Permitir donaciones anónimas</Label>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Button onClick={saveSettings}>Guardar configuración</Button>
         </TabsContent>
       </Tabs>
     </div>
