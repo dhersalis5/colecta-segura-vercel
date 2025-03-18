@@ -30,22 +30,20 @@ const AdminLogin: React.FC = () => {
       setIsLoading(true);
       setError('');
       
-      await login(email, password);
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido al panel de administración",
-      });
-      navigate('/admin/dashboard');
+      const result = await login(email, password);
+      
+      if (result.success) {
+        toast({
+          title: "Inicio de sesión exitoso",
+          description: "Bienvenido al panel de administración",
+        });
+        navigate('/admin/dashboard');
+      } else {
+        setError(result.message || 'Error al iniciar sesión');
+      }
     } catch (err: any) {
       console.error(err);
-      // Manejo de errores específicos de Firebase
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-        setError('Credenciales incorrectas. Por favor verifica tu email y contraseña.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Demasiados intentos fallidos. Por favor intenta más tarde o restablece tu contraseña.');
-      } else {
-        setError('Error al iniciar sesión. Por favor intenta nuevamente.');
-      }
+      setError('Error al iniciar sesión. Por favor intenta nuevamente.');
     } finally {
       setIsLoading(false);
     }
@@ -62,19 +60,20 @@ const AdminLogin: React.FC = () => {
       setIsLoading(true);
       setError('');
       
-      await resetPassword(email);
-      toast({
-        title: "Email enviado",
-        description: "Se ha enviado un correo para restablecer tu contraseña",
-      });
-      setForgotPassword(false);
+      const result = await resetPassword(email);
+      
+      if (result.success) {
+        toast({
+          title: "Email enviado",
+          description: result.message || "Se ha enviado un correo para restablecer tu contraseña",
+        });
+        setForgotPassword(false);
+      } else {
+        setError(result.message || 'Error al enviar el correo');
+      }
     } catch (err: any) {
       console.error(err);
-      if (err.code === 'auth/user-not-found') {
-        setError('No se encontró una cuenta con este email');
-      } else {
-        setError('Error al enviar el correo. Por favor intenta nuevamente.');
-      }
+      setError('Error al enviar el correo. Por favor intenta nuevamente.');
     } finally {
       setIsLoading(false);
     }
@@ -113,6 +112,11 @@ const AdminLogin: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
+                {!forgotPassword && (
+                  <p className="text-xs text-muted-foreground">
+                    Para esta demo, usa: admin@colectasegura.com.ar
+                  </p>
+                )}
               </div>
               
               {!forgotPassword && (
@@ -127,6 +131,9 @@ const AdminLogin: React.FC = () => {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Para esta demo, usa: admin123
+                  </p>
                 </div>
               )}
               

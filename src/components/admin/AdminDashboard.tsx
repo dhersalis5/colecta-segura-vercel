@@ -124,22 +124,13 @@ const AdminDashboard: React.FC = () => {
     setSelectedProject(null);
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast({
-        title: "Sesión cerrada",
-        description: "Has cerrado sesión correctamente",
-      });
-      navigate('/admin/login');
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      toast({
-        title: "Error",
-        description: "Hubo un problema al cerrar sesión",
-        variant: "destructive"
-      });
-    }
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Sesión cerrada",
+      description: "Has cerrado sesión correctamente",
+    });
+    navigate('/admin/login');
   };
 
   const saveSettings = () => {

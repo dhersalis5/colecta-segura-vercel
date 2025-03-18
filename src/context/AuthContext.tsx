@@ -1,28 +1,25 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {
-  User,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  sendPasswordResetEmail
-} from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { localAuth } from '@/lib/localAuth';
+
+interface User {
+  email: string;
+}
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  logout: () => void;
+  resetPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
 }
 
 // Crear contexto con un valor predeterminado
 const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   loading: true,
-  login: async () => {},
-  logout: async () => {},
-  resetPassword: async () => {}
+  login: async () => ({ success: false }),
+  logout: () => {},
+  resetPassword: async () => ({ success: false })
 });
 
 // Hook personalizado para usar el contexto
@@ -37,39 +34,49 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Comprobar autenticación al cargar
+  useEffect(() => {
+    // Simulamos un pequeño retraso para dar sensación de autenticación
+    const timer = setTimeout(() => {
+      const user = localAuth.getCurrentUser();
+      setCurrentUser(user);
+      setLoading(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Función para iniciar sesión
-  const login = async (email: string, password: string): Promise<void> => {
-    return signInWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        console.log('Login exitoso:', userCredential.user.email);
-      });
+  const login = async (email: string, password: string) => {
+    const result = await localAuth.login(email, password);
+    if (result.success) {
+      setCurrentUser({ email });
+    }
+    return result;
   };
 
   // Función para cerrar sesión
-  const logout = (): Promise<void> => {
-    return signOut(auth)
-      .then(() => {
-        console.log('Logout exitoso');
-      });
+  const logout = () => {
+    localAuth.logout();
+    setCurrentUser(null);
   };
 
-  // Función para restablecer contraseña
-  const resetPassword = (email: string): Promise<void> => {
-    return sendPasswordResetEmail(auth, email)
-      .then(() => {
-        console.log('Email de restablecimiento enviado');
-      });
+  // Función simulada para restablecer contraseña
+  const resetPassword = async (email: string) => {
+    // En una aplicación real, enviaríamos un correo
+    // Para esta demo, simplemente simulamos éxito si el correo tiene formato válido
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      return {
+        success: false,
+        message: 'Por favor, ingresa una dirección de correo válida'
+      };
+    }
+    
+    return {
+      success: true,
+      message: 'Si existe una cuenta con este correo, recibirás instrucciones para restablecer tu contraseña'
+    };
   };
-
-  // Efecto para escuchar cambios en la autenticación
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
 
   const value = {
     currentUser,
