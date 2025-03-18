@@ -8,7 +8,7 @@ const firebaseConfig = {
   projectId: "colecta-segura",
   storageBucket: "colecta-segura.appspot.com",
   messagingSenderId: "895445982774",
-  appId: "1:895445982774:web:4a6b54e04a5fe9a01e3bb1"
+  appId: "1:895445982774:web:d7a5a7686eb65ff1f98297"
 };
 
 // Inicializa Firebase
