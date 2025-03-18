@@ -3,12 +3,12 @@ import { getAuth } from 'firebase/auth';
 
 // Configuración de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyC7z5iK86JX9f0jZ5xTj0Y_L66A8TdNRzY",
+  apiKey: "AIzaSyCwQyD0fEyXYWoQYI4kR0x1nBH7H3pJCoA",
   authDomain: "colecta-segura.firebaseapp.com",
   projectId: "colecta-segura",
   storageBucket: "colecta-segura.appspot.com",
-  messagingSenderId: "764292011841",
-  appId: "1:764292011841:web:1e6a9f8d74d9e7a1e1e1e1"
+  messagingSenderId: "895445982774",
+  appId: "1:895445982774:web:4a6b54e04a5fe9a01e3bb1"
 };
 
 // Inicializa Firebase
