@@ -1,57 +1,45 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import AdminProjects from '@/components/admin/AdminProjects';
 import AdminLogin from '@/components/admin/AdminLogin';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from '@/context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const Admin: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('projects');
   const { toast } = useToast();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
-  // En un escenario real, esto se conectaría con un backend de autenticación
-  const handleLogin = (password: string) => {
-    // Simulación de autenticación básica (SOLO PARA DEMO, no para producción)
-    if (password === 'admin123') {
-      setIsAuthenticated(true);
+  useEffect(() => {
+    if (!user) {
+      navigate('/admin/login');
+    }
+  }, [user, navigate]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
       toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido al panel de administración",
+        title: "Sesión cerrada",
+        description: "Has salido del panel de administración",
         variant: "default",
       });
-    } else {
+      navigate('/admin/login');
+    } catch (error) {
       toast({
-        title: "Error de autenticación",
-        description: "Contraseña incorrecta",
+        title: "Error",
+        description: "No se pudo cerrar la sesión",
         variant: "destructive",
       });
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    toast({
-      title: "Sesión cerrada",
-      description: "Has salido del panel de administración",
-      variant: "default",
-    });
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen">
-        <NavBar />
-        <main className="pt-24 pb-20">
-          <div className="container mx-auto px-4 py-8">
-            <AdminLogin onLogin={handleLogin} />
-          </div>
-        </main>
-        <Footer />
-      </div>
-    );
+  if (!user) {
+    return null; // El useEffect se encargará de la redirección
   }
 
   return (

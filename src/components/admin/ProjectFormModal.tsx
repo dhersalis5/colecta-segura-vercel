@@ -1,16 +1,27 @@
-
-import React, { useState } from 'react';
-import { Project } from '@/data/projects';
+import React from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { X, Image as ImageIcon } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Project } from '@/types/project';
 
 interface ProjectFormModalProps {
   project: Project;
-  onSave: (project: Project) => void;
+  onSave: (project: Project) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -19,209 +30,162 @@ const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
   onSave,
   onCancel
 }) => {
-  const [form, setForm] = useState<Project>({...project});
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm({
-      ...form,
-      [name]: value
-    });
-  };
-  
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm({
-      ...form,
-      [name]: parseFloat(value) || 0
-    });
-  };
-  
-  const handleCheckboxChange = (checked: boolean) => {
-    setForm({
-      ...form,
-      featured: checked
-    });
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
+  const [formData, setFormData] = React.useState({
+    ...project,
+    targetAmount: project.targetAmount?.toString() || '',
+    daysLeft: project.daysLeft?.toString() || ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(form);
+    await onSave({
+      ...formData,
+      targetAmount: parseFloat(formData.targetAmount) || 0,
+      daysLeft: parseInt(formData.daysLeft) || 30
+    } as Project);
   };
-  
+
+  const handleChange = (field: string) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setFormData({ ...formData, [field]: e.target.value });
+  };
+
+  const handleSwitchChange = (field: string) => (checked: boolean) => {
+    setFormData({ ...formData, [field]: checked });
+  };
+
+  const handleSelectChange = (field: string) => (value: string) => {
+    setFormData({ ...formData, [field]: value });
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-semibold">
-            {form.id ? "Editar Proyecto" : "Nuevo Proyecto"}
-          </h3>
-          <Button variant="ghost" size="sm" onClick={onCancel} className="h-8 w-8 p-0">
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="p-4">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Título del Proyecto</Label>
+    <Dialog open={true} onOpenChange={onCancel}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>
+            {project.id ? 'Editar Proyecto' : 'Nuevo Proyecto'}
+          </DialogTitle>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Título</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={handleChange('title')}
+              placeholder="Título del proyecto"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Descripción</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={handleChange('description')}
+              placeholder="Descripción del proyecto"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image">URL de la imagen</Label>
+            <Input
+              id="image"
+              value={formData.image}
+              onChange={handleChange('image')}
+              placeholder="URL de la imagen"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="targetAmount">Meta de recaudación</Label>
               <Input
-                id="title"
-                name="title"
-                value={form.title}
-                onChange={handleInputChange}
-                placeholder="Ej: Agua Limpia para San Miguel"
+                id="targetAmount"
+                type="number"
+                value={formData.targetAmount}
+                onChange={handleChange('targetAmount')}
+                placeholder="0"
                 required
               />
             </div>
-            
-            <div>
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea
-                id="description"
-                name="description"
-                value={form.description}
-                onChange={handleInputChange}
-                placeholder="Describe brevemente el proyecto..."
-                rows={3}
+
+            <div className="space-y-2">
+              <Label htmlFor="daysLeft">Días restantes</Label>
+              <Input
+                id="daysLeft"
+                type="number"
+                value={formData.daysLeft}
+                onChange={handleChange('daysLeft')}
+                placeholder="30"
                 required
               />
-            </div>
-            
-            <div>
-              <Label htmlFor="fullDescription">Descripción Completa (HTML)</Label>
-              <Textarea
-                id="fullDescription"
-                name="fullDescription"
-                value={form.fullDescription || ''}
-                onChange={handleInputChange}
-                placeholder="<p>Descripción detallada con formato HTML...</p>"
-                rows={6}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="image">URL de Imagen Principal</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="image"
-                    name="image"
-                    value={form.image}
-                    onChange={handleInputChange}
-                    placeholder="https://ejemplo.com/imagen.jpg"
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="category">Categoría</Label>
-                <Input
-                  id="category"
-                  name="category"
-                  value={form.category}
-                  onChange={handleInputChange}
-                  placeholder="Ej: Educación, Salud, Medio Ambiente"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="currentAmount">Monto Actual ($)</Label>
-                <Input
-                  id="currentAmount"
-                  name="currentAmount"
-                  type="number"
-                  value={form.currentAmount}
-                  onChange={handleNumberChange}
-                  min="0"
-                  step="1"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="targetAmount">Meta ($)</Label>
-                <Input
-                  id="targetAmount"
-                  name="targetAmount"
-                  type="number"
-                  value={form.targetAmount}
-                  onChange={handleNumberChange}
-                  min="1"
-                  step="1"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="daysLeft">Días Restantes</Label>
-                <Input
-                  id="daysLeft"
-                  name="daysLeft"
-                  type="number"
-                  value={form.daysLeft}
-                  onChange={handleNumberChange}
-                  min="1"
-                  step="1"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="location">Ubicación</Label>
-                <Input
-                  id="location"
-                  name="location"
-                  value={form.location || ''}
-                  onChange={handleInputChange}
-                  placeholder="Ej: Ciudad de México"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="organizer">Organizador</Label>
-                <Input
-                  id="organizer"
-                  name="organizer"
-                  value={form.organizer || ''}
-                  onChange={handleInputChange}
-                  placeholder="Nombre de la organización o persona"
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="featured"
-                checked={form.featured}
-                onCheckedChange={handleCheckboxChange}
-              />
-              <label
-                htmlFor="featured"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-              >
-                Proyecto Destacado
-              </label>
-            </div>
-            
-            <div className="pt-4 flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={onCancel}>
-                Cancelar
-              </Button>
-              <Button type="submit">
-                Guardar Proyecto
-              </Button>
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="category">Categoría</Label>
+            <Select
+              value={formData.category}
+              onValueChange={handleSelectChange('category')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona una categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="General">General</SelectItem>
+                <SelectItem value="Educación">Educación</SelectItem>
+                <SelectItem value="Salud">Salud</SelectItem>
+                <SelectItem value="Medio Ambiente">Medio Ambiente</SelectItem>
+                <SelectItem value="Tecnología">Tecnología</SelectItem>
+                <SelectItem value="Deportes">Deportes</SelectItem>
+                <SelectItem value="Arte y Cultura">Arte y Cultura</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Estado</Label>
+            <Select
+              value={formData.status}
+              onValueChange={handleSelectChange('status')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona un estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Activo</SelectItem>
+                <SelectItem value="completed">Completado</SelectItem>
+                <SelectItem value="cancelled">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="featured"
+              checked={formData.featured}
+              onCheckedChange={handleSwitchChange('featured')}
+            />
+            <Label htmlFor="featured">Proyecto destacado</Label>
+          </div>
+
+          <div className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={onCancel}>
+              Cancelar
+            </Button>
+            <Button type="submit">
+              {project.id ? 'Guardar cambios' : 'Crear proyecto'}
+            </Button>
+          </div>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

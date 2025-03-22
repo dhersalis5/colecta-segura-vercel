@@ -3,12 +3,12 @@ import { getAuth } from 'firebase/auth';
 
 // Configuración de Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCwQyD0fEyXYWoQYI4kR0x1nBH7H3pJCoA",
-  authDomain: "colecta-segura.firebaseapp.com",
-  projectId: "colecta-segura",
-  storageBucket: "colecta-segura.appspot.com",
-  messagingSenderId: "895445982774",
-  appId: "1:895445982774:web:d7a5a7686eb65ff1f98297"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Inicializa Firebase

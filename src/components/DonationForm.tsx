@@ -56,7 +56,7 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
   };
 
   // Inicializar react-hook-form
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<DonationFormValues>({
+  const { register, handleSubmit: submitForm, setValue, watch, formState: { errors } } = useForm<DonationFormValues>({
     resolver: zodResolver(donationSchema),
     defaultValues: {
       amount: 0,
@@ -81,7 +81,7 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
     }
   }, [project]);
 
-  const handleSubmit = async (data: DonationFormValues) => {
+  const onSubmit = async (data: DonationFormValues) => {
     try {
       setIsSubmitting(true);
       setError(null);
@@ -196,7 +196,7 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
                 </Alert>
               )}
 
-              <form onSubmit={handleSubmit(handleSubmit)} className="space-y-6">
+              <form onSubmit={submitForm(onSubmit)} className="space-y-6">
                 {/* Sección de monto */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Monto a donar</h3>
@@ -288,70 +288,73 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
                   </div>
                 </div>
 
-                {/* Sección de métodos de pago */}
+                {/* Sección de método de pago */}
                 <div className="space-y-4 pt-4 border-t">
                   <h3 className="text-lg font-medium">Método de pago</h3>
-                  
                   <RadioGroup 
-                    defaultValue={getDefaultPaymentMethod()} 
-                    value={currentPaymentMethod}
-                    onValueChange={(value) => setValue('paymentMethod', value as any)}
-                    className="space-y-3"
+                    defaultValue={currentPaymentMethod}
+                    onValueChange={(value) => setValue('paymentMethod', value as 'mercadoPago' | 'bankTransfer' | 'cash')}
+                    className="space-y-4"
                   >
-                    {isPaymentMethodAvailable('mercadoPago') && (
-                      <div className="flex items-center space-x-3 rounded-md border p-3">
-                        <RadioGroupItem value="mercadoPago" id="mercadoPago" />
-                        <Label htmlFor="mercadoPago" className="flex items-center cursor-pointer">
-                          <CreditCard className="mr-2 h-5 w-5 text-blue-600" />
-                          <div>
-                            <span className="font-medium">MercadoPago</span>
-                            <p className="text-sm text-gray-500">Tarjeta de crédito/débito, transferencia</p>
-                          </div>
-                        </Label>
-                      </div>
-                    )}
-                    
-                    {isPaymentMethodAvailable('bankTransfer') && (
-                      <div className="flex items-center space-x-3 rounded-md border p-3">
-                        <RadioGroupItem value="bankTransfer" id="bankTransfer" />
-                        <Label htmlFor="bankTransfer" className="flex items-center cursor-pointer">
-                          <Landmark className="mr-2 h-5 w-5 text-green-600" />
-                          <div>
-                            <span className="font-medium">Transferencia Bancaria</span>
-                            <p className="text-sm text-gray-500">Transferir desde tu banco</p>
-                          </div>
-                        </Label>
-                      </div>
-                    )}
-                    
-                    {isPaymentMethodAvailable('cash') && (
-                      <div className="flex items-center space-x-3 rounded-md border p-3">
-                        <RadioGroupItem value="cash" id="cash" />
-                        <Label htmlFor="cash" className="flex items-center cursor-pointer">
-                          <Banknote className="mr-2 h-5 w-5 text-amber-600" />
-                          <div>
-                            <span className="font-medium">Efectivo</span>
-                            <p className="text-sm text-gray-500">Coordinar entrega en persona</p>
-                          </div>
-                        </Label>
-                      </div>
-                    )}
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <RadioGroupItem value="mercadoPago" id="mercadoPago" />
+                      <Label htmlFor="mercadoPago" className="flex items-center cursor-pointer">
+                        <CreditCard className="mr-2 h-4 w-4" />
+                        Pagar con MercadoPago
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <RadioGroupItem value="bankTransfer" id="bankTransfer" />
+                      <Label htmlFor="bankTransfer" className="flex items-center cursor-pointer">
+                        <Landmark className="mr-2 h-4 w-4" />
+                        Transferencia Bancaria
+                      </Label>
+                    </div>
+
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                      <RadioGroupItem value="cash" id="cash" />
+                      <Label htmlFor="cash" className="flex items-center cursor-pointer">
+                        <Banknote className="mr-2 h-4 w-4" />
+                        Efectivo
+                      </Label>
+                    </div>
                   </RadioGroup>
-                  
-                  {errors.paymentMethod && (
-                    <p className="text-red-500 text-sm">{errors.paymentMethod.message}</p>
+
+                  {/* Información específica según el método de pago */}
+                  {currentPaymentMethod === 'bankTransfer' && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-2">
+                      <h4 className="font-medium">Datos para la transferencia:</h4>
+                      <p>Banco: Banco Nación Argentina</p>
+                      <p>Titular: Fundación Ayuda Solidaria</p>
+                      <p>CUIL: 30-71234567-8</p>
+                      <p>CBU: 0110011230000123456789</p>
+                      <p>Alias: AYUDA.SOLIDARIA.ARG</p>
+                      <p className="text-sm text-gray-600 mt-4">
+                        Una vez realizada la transferencia, nuestro equipo verificará el pago y actualizará el progreso de la campaña.
+                      </p>
+                    </div>
+                  )}
+
+                  {currentPaymentMethod === 'cash' && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg space-y-2">
+                      <h4 className="font-medium">Donación en efectivo:</h4>
+                      <p>Completa tus datos y nos pondremos en contacto contigo para coordinar la entrega.</p>
+                      <Textarea
+                        placeholder="¿Cuándo y dónde prefieres realizar la entrega? (opcional)"
+                        className="mt-2"
+                        {...register('message')}
+                      />
+                    </div>
                   )}
                 </div>
 
-                {/* Botones de pago */}
-                <div className="pt-4 border-t">
+                <CardFooter className="flex justify-between pt-6">
                   {currentPaymentMethod === 'mercadoPago' ? (
-                    <MercadoPagoButton 
-                      price={currentAmount || 0}
-                      title={`Donación: ${project.title}`}
-                      description={`Donación para el proyecto: ${project.title}`}
-                      onSuccess={handleMercadoPagoSuccess}
-                      onError={handleMercadoPagoError}
+                    <MercadoPagoButton
+                      projectTitle={project.title}
+                      amount={currentAmount}
+                      disabled={isSubmitting || !currentAmount}
                     />
                   ) : (
                     <Button 
@@ -362,68 +365,38 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
                       {isSubmitting ? 'Procesando...' : 'Confirmar donación'}
                     </Button>
                   )}
-                </div>
+                </CardFooter>
               </form>
             </CardContent>
           </TabsContent>
 
           <TabsContent value="confirmacion">
             <CardContent className="pt-6 text-center">
-              <div className="flex flex-col items-center justify-center py-8">
-                <div className="rounded-full bg-green-100 p-3 mb-4">
-                  <CheckCircle className="h-8 w-8 text-green-600" />
+              <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+              <h3 className="text-xl font-medium mb-2">¡Gracias por tu donación!</h3>
+              
+              {currentPaymentMethod === 'mercadoPago' ? (
+                <p>Tu pago ha sido procesado correctamente. El progreso de la campaña se actualizará en breve.</p>
+              ) : currentPaymentMethod === 'bankTransfer' ? (
+                <div className="space-y-4">
+                  <p>Hemos registrado tu intención de donación por transferencia bancaria.</p>
+                  <p>Por favor, realiza la transferencia usando los datos proporcionados y nuestro equipo verificará el pago.</p>
+                  <p className="text-sm text-gray-600">Te enviaremos un correo cuando confirmemos la recepción.</p>
                 </div>
-                <h3 className="text-xl font-bold mb-2">¡Gracias por tu donación!</h3>
-                <p className="text-gray-600 mb-6">
-                  {currentPaymentMethod === 'mercadoPago' 
-                    ? 'Tu pago ha sido procesado correctamente.' 
-                    : currentPaymentMethod === 'bankTransfer'
-                      ? 'Te hemos enviado los datos bancarios a tu correo electrónico.'
-                      : 'Te contactaremos pronto para coordinar la entrega.'
-                  }
-                </p>
-                
-                <div className="bg-gray-50 w-full max-w-md rounded-lg p-4 mb-6">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Proyecto:</span>
-                    <span className="font-medium">{project.title}</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-600">Monto:</span>
-                    <span className="font-medium">${currentAmount?.toLocaleString() || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Método:</span>
-                    <span className="font-medium">
-                      {currentPaymentMethod === 'mercadoPago' 
-                        ? 'MercadoPago' 
-                        : currentPaymentMethod === 'bankTransfer'
-                          ? 'Transferencia Bancaria'
-                          : 'Efectivo'
-                      }
-                    </span>
-                  </div>
+              ) : (
+                <div className="space-y-4">
+                  <p>Hemos registrado tu intención de donación en efectivo.</p>
+                  <p>Nuestro equipo se pondrá en contacto contigo pronto para coordinar la entrega.</p>
+                  <p className="text-sm text-gray-600">Revisa tu correo electrónico para más detalles.</p>
                 </div>
-                
-                {currentPaymentMethod === 'bankTransfer' && project.bankInfo && (
-                  <div className="bg-blue-50 w-full max-w-md rounded-lg p-4 mb-6 text-left">
-                    <h4 className="font-medium text-blue-800 mb-2">Datos para la transferencia:</h4>
-                    <ul className="space-y-1 text-sm">
-                      <li><span className="text-blue-700">Banco:</span> {project.bankInfo.bankName}</li>
-                      <li><span className="text-blue-700">Titular:</span> {project.bankInfo.accountName}</li>
-                      <li><span className="text-blue-700">CBU:</span> {project.bankInfo.cbu}</li>
-                      <li><span className="text-blue-700">Alias:</span> {project.bankInfo.alias}</li>
-                    </ul>
-                  </div>
-                )}
-                
-                <Button 
-                  onClick={onSuccess}
-                  className="w-full max-w-md"
-                >
-                  Volver al proyecto
-                </Button>
-              </div>
+              )}
+
+              <Button 
+                onClick={onSuccess} 
+                className="mt-6"
+              >
+                Volver al proyecto
+              </Button>
             </CardContent>
           </TabsContent>
         </Tabs>

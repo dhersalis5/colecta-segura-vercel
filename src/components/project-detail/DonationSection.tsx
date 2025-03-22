@@ -1,9 +1,13 @@
-
 import React, { useState } from 'react';
 import { Project } from '@/data/projects';
-import { DollarSign } from 'lucide-react';
+import { DollarSign, CreditCard, Landmark, Banknote } from 'lucide-react';
 import MercadoPagoButton from '@/components/MercadoPagoButton';
 import AnimatedSection from '@/components/AnimatedSection';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 interface DonationSectionProps {
   project: Project;
@@ -16,6 +20,14 @@ const DonationSection: React.FC<DonationSectionProps> = ({
   donationAmount, 
   setDonationAmount 
 }) => {
+  const [paymentMethod, setPaymentMethod] = useState<'mercadoPago' | 'bankTransfer' | 'cash'>('mercadoPago');
+  const [contactInfo, setContactInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
+
   const handleDonationSelect = (amount: number) => {
     setDonationAmount(amount);
   };
@@ -27,6 +39,26 @@ const DonationSection: React.FC<DonationSectionProps> = ({
     } else {
       setDonationAmount(0);
     }
+  };
+
+  const handleContactInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setContactInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmitDonation = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Aquí manejarías la lógica para donaciones en efectivo o transferencia
+    console.log('Donación enviada:', {
+      amount: donationAmount,
+      method: paymentMethod,
+      contactInfo
+    });
+    // Mostrar mensaje de éxito
+    alert('¡Gracias! Nos pondremos en contacto contigo pronto.');
   };
 
   return (
@@ -75,7 +107,7 @@ const DonationSection: React.FC<DonationSectionProps> = ({
             </div>
           )}
           
-          <div className="mb-4">
+          <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Otra cantidad</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -90,12 +122,102 @@ const DonationSection: React.FC<DonationSectionProps> = ({
               />
             </div>
           </div>
-          
-          <MercadoPagoButton 
-            projectTitle={project.title}
-            amount={donationAmount}
-            disabled={!donationAmount}
-          />
+
+          <div className="mb-6">
+            <h4 className="text-sm font-medium mb-3">Método de pago</h4>
+            <RadioGroup 
+              value={paymentMethod}
+              onValueChange={(value) => setPaymentMethod(value as 'mercadoPago' | 'bankTransfer' | 'cash')}
+              className="space-y-3"
+            >
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <RadioGroupItem value="mercadoPago" id="mercadoPago" />
+                <Label htmlFor="mercadoPago" className="flex items-center cursor-pointer">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Pagar con MercadoPago
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <RadioGroupItem value="bankTransfer" id="bankTransfer" />
+                <Label htmlFor="bankTransfer" className="flex items-center cursor-pointer">
+                  <Landmark className="mr-2 h-4 w-4" />
+                  Transferencia Bancaria
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                <RadioGroupItem value="cash" id="cash" />
+                <Label htmlFor="cash" className="flex items-center cursor-pointer">
+                  <Banknote className="mr-2 h-4 w-4" />
+                  Efectivo
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+
+          {paymentMethod === 'mercadoPago' ? (
+            <MercadoPagoButton 
+              projectTitle={project.title}
+              amount={donationAmount}
+              disabled={!donationAmount}
+            />
+          ) : (
+            <form onSubmit={handleSubmitDonation} className="space-y-4">
+              <Input
+                name="name"
+                placeholder="Tu nombre"
+                value={contactInfo.name}
+                onChange={handleContactInfoChange}
+                required
+              />
+              <Input
+                name="email"
+                type="email"
+                placeholder="Tu email"
+                value={contactInfo.email}
+                onChange={handleContactInfoChange}
+                required
+              />
+              <Input
+                name="phone"
+                type="tel"
+                placeholder="Tu teléfono"
+                value={contactInfo.phone}
+                onChange={handleContactInfoChange}
+                required
+              />
+              
+              {paymentMethod === 'bankTransfer' && (
+                <div className="p-4 bg-gray-50 rounded-lg space-y-2 text-sm">
+                  <h4 className="font-medium">Datos bancarios:</h4>
+                  <p>Banco: Banco Nación Argentina</p>
+                  <p>Titular: Fundación Ayuda Solidaria</p>
+                  <p>CUIL: 30-71234567-8</p>
+                  <p>CBU: 0110011230000123456789</p>
+                  <p>Alias: AYUDA.SOLIDARIA.ARG</p>
+                </div>
+              )}
+
+              {paymentMethod === 'cash' && (
+                <Textarea
+                  name="message"
+                  placeholder="¿Cuándo y dónde prefieres realizar la entrega?"
+                  value={contactInfo.message}
+                  onChange={handleContactInfoChange}
+                  required
+                />
+              )}
+
+              <Button 
+                type="submit" 
+                className="w-full"
+                disabled={!donationAmount}
+              >
+                Confirmar donación
+              </Button>
+            </form>
+          )}
         </div>
         
         <div className="bg-white rounded-xl border border-gray-100 p-6">

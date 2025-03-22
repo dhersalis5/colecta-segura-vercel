@@ -25,7 +25,7 @@ export interface PaymentRequestDirect {
 // CONFIGURACIÓN DE MERCADOPAGO
 // ============================
 // Token de prueba - úsalo solo para testeo
-const MERCADOPAGO_ACCESS_TOKEN = "TEST-3802957432501116-062816-ac4a26889b0ebb55a9b5d0bd6f8dbd15-265663532";
+const MERCADOPAGO_ACCESS_TOKEN = import.meta.env.VITE_MERCADOPAGO_ACCESS_TOKEN;
 
 // Ajusta según tu país
 // MXN: México, ARS: Argentina, CLP: Chile, COP: Colombia, PEN: Perú, BRL: Brasil

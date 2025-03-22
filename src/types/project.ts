@@ -1,30 +1,31 @@
+export interface Transaction {
+  id: string;
+  projectId: string;
+  amount: number;
+  type: 'cash' | 'transfer';
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: Date;
+  updatedAt: Date;
+  donorName?: string;
+  donorEmail?: string;
+  transferReference?: string;
+}
+
 export interface Project {
   id: string;
   title: string;
-  shortDescription: string;
-  fullDescription: string;
-  goalAmount: number;
-  amountRaised: number;
-  coverImage: string;
-  additionalImages?: string[];
-  isActive: boolean;
-  location: string;
-  organizerName: string;
-  contactEmail: string;
-  createdAt: string;
-  updatedAt: string;
-  donorsCount: number;
-  paymentMethods?: {
-    mercadoPago: boolean;
-    bankTransfer: boolean;
-    cash: boolean;
-  };
-  bankInfo?: {
-    accountName: string;
-    bankName: string;
-    cbu: string;
-    alias: string;
-  };
+  description: string;
+  image: string;
+  currentAmount: number;
+  targetAmount: number;
+  daysLeft: number;
+  backers: number;
+  category: string;
+  featured: boolean;
+  status: 'active' | 'completed' | 'cancelled';
+  createdAt: Date;
+  updatedAt: Date;
+  transactions?: Transaction[];
 }
 
 export interface Donation {

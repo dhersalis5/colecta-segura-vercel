@@ -7,7 +7,7 @@ interface AuthGuardProps {
 }
 
 const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
-  const { currentUser, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   // Mientras se verifica el estado de autenticación, muestra un estado de carga
   if (loading) {
@@ -19,7 +19,7 @@ const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   }
 
   // Si no hay usuario autenticado, redirige al login
-  if (!currentUser) {
+  if (!user) {
     return <Navigate to="/admin/login" replace />;
   }
 
