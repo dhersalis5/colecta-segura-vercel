@@ -125,6 +125,7 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
   // Manejar error en MercadoPago
   const handleMercadoPagoError = (errorMsg: string) => {
     setError(`Error con MercadoPago: ${errorMsg}`);
+    navigate('/donation/failure');
   };
 
   // Seleccionar un monto preestablecido

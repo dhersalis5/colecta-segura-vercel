@@ -22,6 +22,8 @@ interface MercadoPagoButtonProps {
   projectTitle: string;
   amount: number | null;
   disabled?: boolean;
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
 }
 
 // Para desarrollo local, usa true. Para producción en Vercel, cambia a false
@@ -36,7 +38,9 @@ const formSchema = z.object({
 const MercadoPagoButton: React.FC<MercadoPagoButtonProps> = ({
   projectTitle,
   amount,
-  disabled = false
+  disabled = false,
+  onSuccess,
+  onError
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +117,9 @@ const MercadoPagoButton: React.FC<MercadoPagoButtonProps> = ({
         title: "Redireccionando a MercadoPago",
         description: "Serás redirigido a la página de pago seguro de MercadoPago",
       });
+
+      // Llamar al callback de éxito si existe
+      onSuccess?.();
       
       // Redirigir al usuario a la página de checkout de MercadoPago
       window.location.href = checkoutUrl;
@@ -148,7 +155,11 @@ const MercadoPagoButton: React.FC<MercadoPagoButtonProps> = ({
       }
       
       // Establecer el error detallado
-      setError(`${userMessage}${errorDetail ? '\n\nDetalle: ' + errorDetail : ''}`);
+      const fullErrorMessage = `${userMessage}${errorDetail ? '\n\nDetalle: ' + errorDetail : ''}`;
+      setError(fullErrorMessage);
+      
+      // Llamar al callback de error si existe
+      onError?.(fullErrorMessage);
       
       toast({
         title: "Error al procesar el pago",
