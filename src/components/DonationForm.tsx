@@ -41,11 +41,6 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
   const [error, setError] = useState<string | null>(null);
   const [suggestedAmounts] = useState([1000, 2500, 5000, 10000]);
   const navigate = useNavigate();
-  const [availablePaymentMethods, setAvailablePaymentMethods] = useState({
-    mercadoPago: true,
-    bankTransfer: true, 
-    cash: true
-  });
 
   // Inicializar react-hook-form
   const { register, handleSubmit: submitForm, setValue, watch, formState: { errors } } = useForm<DonationFormValues>({
@@ -61,17 +56,6 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
   const currentAmount = watch('amount');
   const currentPaymentMethod = watch('paymentMethod');
   const currentIsAnonymous = watch('isAnonymous');
-
-  // Cargar métodos de pago desde el proyecto
-  useEffect(() => {
-    if (project.paymentMethods) {
-      setAvailablePaymentMethods({
-        mercadoPago: project.paymentMethods.mercadoPago,
-        bankTransfer: project.paymentMethods.bankTransfer,
-        cash: project.paymentMethods.cash
-      });
-    }
-  }, [project]);
 
   const onSubmit = async (data: DonationFormValues) => {
     try {
@@ -217,7 +201,7 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
                 <Checkbox 
                   id="isAnonymous" 
                   checked={currentIsAnonymous}
-                  onCheckedChange={(checked) => setValue('isAnonymous', checked)}
+                  onCheckedChange={(checked: boolean) => setValue('isAnonymous', checked)}
                 />
                 <Label htmlFor="isAnonymous">Hacer donación anónima</Label>
               </div>
