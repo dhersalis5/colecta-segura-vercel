@@ -15,6 +15,7 @@ import { ArrowLeft, CreditCard, Landmark, Banknote, CheckCircle, AlertCircle } f
 import { Project } from '@/types/project';
 import MercadoPagoButton from './MercadoPagoButton';
 import { createDonation } from '@/services/donationService';
+import { useNavigate } from 'react-router-dom';
 
 // Esquema de validación
 const donationSchema = z.object({
@@ -42,6 +43,7 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
   const [success, setSuccess] = useState(false);
   const [suggestedAmounts] = useState([1000, 2500, 5000, 10000]);
   const [activeTab, setActiveTab] = useState('donacion');
+  const navigate = useNavigate();
   const [availablePaymentMethods, setAvailablePaymentMethods] = useState({
     mercadoPago: true,
     bankTransfer: true, 
@@ -100,9 +102,18 @@ const DonationForm: React.FC<DonationFormProps> = ({ project, onSuccess, onCance
           status: 'pending'
         });
 
-        setSuccess(true);
-        // Mostrar pestaña de confirmación
-        setActiveTab('confirmacion');
+        // Redirigir según el método de pago
+        const params = new URLSearchParams({
+          amount: data.amount.toString(),
+          projectTitle: project.title,
+          email: data.donorEmail
+        });
+
+        if (data.paymentMethod === 'bankTransfer') {
+          navigate(`/donation/transfer?${params.toString()}`);
+        } else if (data.paymentMethod === 'cash') {
+          navigate(`/donation/cash?${params.toString()}`);
+        }
       }
     } catch (err) {
       console.error('Error al procesar la donación:', err);

@@ -16,6 +16,8 @@ import NotFound from "./pages/NotFound";
 import DonationSuccess from "./pages/DonationSuccess";
 import DonationPending from "./pages/DonationPending";
 import DonationFailure from "./pages/DonationFailure";
+import DonationTransfer from "./pages/DonationTransfer";
+import DonationCash from "./pages/DonationCash";
 
 const queryClient = new QueryClient();
 
@@ -39,10 +41,12 @@ const App = () => {
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/about" element={<About />} />
               <Route path="/contact" element={<Contact />} />
+              <Route path="/donation/success" element={<DonationSuccess />} />
+              <Route path="/donation/pending" element={<DonationPending />} />
+              <Route path="/donation/failure" element={<DonationFailure />} />
+              <Route path="/donation/transfer" element={<DonationTransfer />} />
+              <Route path="/donation/cash" element={<DonationCash />} />
               <Route path="/admin/*" element={<AdminRoutes />} />
-              <Route path="/donation-success" element={<DonationSuccess />} />
-              <Route path="/donation-pending" element={<DonationPending />} />
-              <Route path="/donation-failure" element={<DonationFailure />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
